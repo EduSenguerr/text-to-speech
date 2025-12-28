@@ -1,8 +1,16 @@
-import pyttsx3 
+import pyttsx3
 
-engine = pyttsx3.init()
 
-text = "Hi, this is my first text to speech project on python"
+def text_to_speech(text: str) -> None:
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
 
-engine.say(text)
-engine.runAndWait()
+
+def main():
+    user_text = input("Enter the text you want to convert to speech: ")
+    text_to_speech(user_text)
+
+
+if __name__ == "__main__":
+    main()
