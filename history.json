@@ -1,0 +1,29 @@
+[
+  {
+    "date": "2025-12-28T23:27:05",
+    "file": "outputs/20251228-232702-testing-history-logging-feature-in-speak.aiff",
+    "rate": 175,
+    "volume": 1.0,
+    "voice": "default",
+    "mode": "export",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2025-12-28T23:28:44",
+    "file": "outputs/20251228-232843-testing-history-logging-feature-in-speak.aiff",
+    "rate": 175,
+    "volume": 1.0,
+    "voice": "default",
+    "mode": "both",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2025-12-28T23:33:36",
+    "file": "outputs/20251228-233335-hello-there--testing-the-paste-input-his.aiff",
+    "rate": 175,
+    "volume": 1.0,
+    "voice": "default",
+    "mode": "both",
+    "text_preview": "Hello there,  testing the paste input history logging."
+  }
+]
