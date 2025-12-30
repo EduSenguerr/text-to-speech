@@ -4,13 +4,13 @@ import tkinter as tk
 import subprocess
 import sys
 
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 from datetime import datetime
 
 from speaknotes.presets import PRESETS
 from speaknotes.tts import TTSSettings, list_voices, speak_now, synthesize_to_file
-from speaknotes.history_utils import append_history, create_entry
+from speaknotes.history_utils import append_history, create_entry, load_history
 
 
 class SpeakNotesApp:
@@ -66,6 +66,7 @@ class SpeakNotesApp:
         btn_frame.pack(fill="x", padx=12, pady=10)
 
         tk.Button(btn_frame, text="Load .txt", command=self.load_txt).pack(side="left")
+        tk.Button(btn_frame, text="History", command=self.open_history_window).pack(side="left", padx=8)
         tk.Button(btn_frame, text="Open Outputs", command=self.open_outputs_folder).pack(side="left", padx=8)
 
 
@@ -188,6 +189,114 @@ class SpeakNotesApp:
         append_history(create_entry(out_path, settings, "both", user_text))
 
         self.status_var.set(f"Preview + saved: {out_path}")
+
+    def open_history_window(self) -> None:
+        """
+        Opens a separate window that displays history.json entries in a table (Treeview).
+        """
+        window = tk.Toplevel(self.root)
+        window.title("SpeakNotes — History")
+        window.geometry("900x420")
+    
+        # Top controls (Refresh + Play Selected)
+        controls = tk.Frame(window)
+        controls.pack(fill="x", padx=12, pady=10)
+    
+        tk.Button(controls, text="Refresh", command=lambda: self._populate_history(tree)).pack(side="left")
+    
+        tk.Button(controls, text="Play Selected", command=lambda: self._play_selected_history(tree)).pack(side="left", padx=8)
+    
+        # Treeview (table)
+        columns = ("date", "mode", "file", "voice", "rate", "volume", "text_preview")
+    
+        tree = ttk.Treeview(window, columns=columns, show="headings", height=14)
+        tree.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+    
+        # Define column headings
+        tree.heading("date", text="Date")
+        tree.heading("mode", text="Mode")
+        tree.heading("file", text="File")
+        tree.heading("voice", text="Voice")
+        tree.heading("rate", text="Rate")
+        tree.heading("volume", text="Volume")
+        tree.heading("text_preview", text="Text Preview")
+    
+        # Define column widths (reasonable defaults)
+        tree.column("date", width=140, anchor="w")
+        tree.column("mode", width=70, anchor="w")
+        tree.column("file", width=240, anchor="w")
+        tree.column("voice", width=140, anchor="w")
+        tree.column("rate", width=60, anchor="center")
+        tree.column("volume", width=70, anchor="center")
+        tree.column("text_preview", width=260, anchor="w")
+    
+        # Populate initial data
+        self._populate_history(tree)
+
+
+    def _populate_history(self, tree: ttk.Treeview) -> None:
+        """
+        Loads history entries from history.json and fills the Treeview.
+        """
+        # Clear existing rows
+        for item_id in tree.get_children():
+            tree.delete(item_id)
+    
+        entries = load_history()
+        if not isinstance(entries, list):
+            return
+    
+        # Insert newest first (optional but practical)
+        for entry in reversed(entries):
+            date = entry.get("date", "")
+            mode = entry.get("mode", "")
+            file_path = entry.get("file", "")
+            voice = entry.get("voice", "")
+            rate = entry.get("rate", "")
+            volume = entry.get("volume", "")
+            text_preview = entry.get("text_preview", "")
+    
+            tree.insert(
+                "",
+                "end",
+                values=(date, mode, file_path, voice, rate, volume, text_preview),
+            )
+    
+    
+    def _play_selected_history(self, tree: ttk.Treeview) -> None:
+        """
+        Plays the audio file from the selected history row (macOS uses afplay).
+        """
+        selection = tree.selection()
+        if not selection:
+            messagebox.showinfo("No selection", "Please select a row first.")
+            return
+    
+        item_id = selection[0]
+        values = tree.item(item_id, "values")
+        if not values or len(values) < 3:
+            messagebox.showerror("Error", "Invalid selection data.")
+            return
+    
+        file_path = values[2]
+        if not file_path:
+            messagebox.showerror("Error", "No file path found for this entry.")
+            return
+    
+        audio_path = Path(file_path)
+        if not audio_path.exists():
+            messagebox.showerror("File not found", f"Audio file not found:\n{audio_path}")
+            return
+    
+        # Reuse the same playback logic as Play Latest (macOS only, for now)
+        import subprocess
+        import sys
+    
+        if sys.platform == "darwin":
+            subprocess.run(["afplay", str(audio_path)])
+        else:
+            messagebox.showinfo("Unsupported", "Auto-play is currently implemented only for macOS.")
+
     
     def open_outputs_folder(self) -> None:
         """
