@@ -11,6 +11,8 @@ from datetime import datetime
 from speaknotes.presets import PRESETS
 from speaknotes.tts import TTSSettings, list_voices, speak_now, synthesize_to_file
 from speaknotes.history_utils import append_history, create_entry, load_history
+from speaknotes.config_utils import load_config, save_config
+
 
 
 class SpeakNotesApp:
@@ -28,12 +30,20 @@ class SpeakNotesApp:
         self.voice_name_to_id = {name: vid for vid, name in self.voice_items}
 
         # ---- UI Variables (Tkinter StringVars) ----
-        self.preset_var = tk.StringVar(value="study")
-        self.voice_var = tk.StringVar(value="Default (system)")
+        config = load_config()
+
+        self.preset_var = tk.StringVar(value=config.get("preset", "study"))
+        self.voice_var = tk.StringVar(value=config.get("voice", "Default (system)"))
+        self.mode_var = tk.StringVar(value=config.get("mode", "export"))
+        
         self.status_var = tk.StringVar(value="Ready.")
 
         # ---- Build UI ----
         self._build_layout()
+        self.preset_var.trace_add("write", lambda *_: self.save_current_config())
+        self.voice_var.trace_add("write", lambda *_: self.save_current_config())
+        self.mode_var.trace_add("write", lambda *_: self.save_current_config())
+        
 
     def _build_layout(self) -> None:
         # Top row: preset + voice
@@ -49,6 +59,10 @@ class SpeakNotesApp:
         voice_options = ["Default (system)"] + [name for _, name in self.voice_items]
         voice_menu = tk.OptionMenu(top_frame, self.voice_var, *voice_options)
         voice_menu.pack(side="left", padx=8)
+        tk.Label(top_frame, text="Mode:").pack(side="left", padx=(16, 0))
+        mode_menu = tk.OptionMenu(top_frame, self.mode_var, "preview", "export", "both")
+        mode_menu.pack(side="left", padx=8)
+
 
         # Text box + scrollbar
         text_frame = tk.Frame(self.root)
@@ -69,6 +83,7 @@ class SpeakNotesApp:
         tk.Button(btn_frame, text="History", command=self.open_history_window).pack(side="left", padx=8)
         tk.Button(btn_frame, text="Open Outputs", command=self.open_outputs_folder).pack(side="left", padx=8)
 
+        tk.Button(btn_frame, text="Run", command=self.run_mode).pack(side="right", padx=6)
 
         tk.Button(btn_frame, text="Preview", command=self.preview).pack(side="right", padx=6)
         tk.Button(btn_frame, text="Export", command=self.export).pack(side="right", padx=6)
@@ -312,6 +327,19 @@ class SpeakNotesApp:
         else:
             subprocess.run(["xdg-open", str(out_dir)])
 
+    def run_mode(self) -> None:
+        """
+        Runs the selected mode (preview/export/both) using the current text and settings.
+        """
+        mode = self.mode_var.get().strip().lower()
+        if mode == "preview":
+            self.preview()
+        elif mode == "both":
+            self.both()
+        else:
+            self.export()
+
+
     def play_latest(self) -> None:
         """
         Plays the most recently modified audio file in outputs/ (macOS uses afplay).
@@ -334,6 +362,17 @@ class SpeakNotesApp:
             subprocess.run(["afplay", str(latest)])
         else:
             messagebox.showinfo("Unsupported", "Auto-play is currently implemented only for macOS.")
+
+    def save_current_config(self) -> None:
+        """
+        Persists the current GUI selections to config.json.
+        """
+        save_config({
+            "preset": self.preset_var.get(),
+            "voice": self.voice_var.get(),
+            "mode": self.mode_var.get(),
+        })
+
 
 
 def main() -> None:
