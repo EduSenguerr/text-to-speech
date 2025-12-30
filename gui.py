@@ -35,7 +35,11 @@ class SpeakNotesApp:
         self.preset_var = tk.StringVar(value=config.get("preset", "study"))
         self.voice_var = tk.StringVar(value=config.get("voice", "Default (system)"))
         self.mode_var = tk.StringVar(value=config.get("mode", "export"))
-        
+        self.rate_var = tk.IntVar(value=int(config.get("rate", 175)))
+        self.volume_var = tk.DoubleVar(value=float(config.get("volume", 1.0)))
+        self.rate_var.trace_add("write", lambda *_: self.save_current_config())
+        self.volume_var.trace_add("write", lambda *_: self.save_current_config())
+
         self.status_var = tk.StringVar(value="Ready.")
 
         # ---- Build UI ----
@@ -75,6 +79,34 @@ class SpeakNotesApp:
         scrollbar.pack(side="right", fill="y")
         self.text_box.config(yscrollcommand=scrollbar.set)
 
+        # Sliders row: rate + volume
+        sliders_frame = tk.Frame(self.root)
+        sliders_frame.pack(fill="x", padx=12, pady=(0, 10))
+        
+        tk.Label(sliders_frame, text="Rate:").pack(side="left")
+        rate_scale = tk.Scale(
+            sliders_frame,
+            from_=120,
+            to=260,
+            orient="horizontal",
+            variable=self.rate_var,
+            length=220,
+        )
+        rate_scale.pack(side="left", padx=8)
+        
+        tk.Label(sliders_frame, text="Volume:").pack(side="left", padx=(16, 0))
+        volume_scale = tk.Scale(
+            sliders_frame,
+            from_=0.0,
+            to=1.0,
+            resolution=0.05,
+            orient="horizontal",
+            variable=self.volume_var,
+            length=220,
+        )
+        volume_scale.pack(side="left", padx=8)
+
+
         # Buttons row
         btn_frame = tk.Frame(self.root)
         btn_frame.pack(fill="x", padx=12, pady=10)
@@ -108,18 +140,23 @@ class SpeakNotesApp:
 
     def get_settings(self) -> TTSSettings:
         """
-        Builds TTSSettings from the selected preset and voice.
+        Builds TTSSettings from the selected preset, voice, and slider overrides.
         """
         preset_key = self.preset_var.get().strip().lower()
-        settings = PRESETS.get(preset_key, PRESETS["study"])
-
+        preset_settings = PRESETS.get(preset_key, PRESETS["study"])
+    
+        # Slider overrides (these are the "personal" settings)
+        rate = int(self.rate_var.get())
+        volume = float(self.volume_var.get())
+    
         voice_name = self.voice_var.get()
         if voice_name != "Default (system)":
             voice_id = self.voice_name_to_id.get(voice_name)
             if voice_id:
-                return TTSSettings(rate=settings.rate, volume=settings.volume, voice_id=voice_id)
+                return TTSSettings(rate=rate, volume=volume, voice_id=voice_id)
+    
+        return TTSSettings(rate=rate, volume=volume, voice_id=None)
 
-        return settings
 
     def make_output_path(self, user_text: str) -> Path:
         """
@@ -371,7 +408,10 @@ class SpeakNotesApp:
             "preset": self.preset_var.get(),
             "voice": self.voice_var.get(),
             "mode": self.mode_var.get(),
+            "rate": int(self.rate_var.get()),
+            "volume": float(self.volume_var.get()),
         })
+
 
 
 
