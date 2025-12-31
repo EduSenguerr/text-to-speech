@@ -47,6 +47,10 @@ class SpeakNotesApp:
         self.preset_var.trace_add("write", lambda *_: self.save_current_config())
         self.voice_var.trace_add("write", lambda *_: self.save_current_config())
         self.mode_var.trace_add("write", lambda *_: self.save_current_config())
+        # Track where the current text came from
+        self.text_source = "manual"      # "manual" or "txt"
+        self.text_source_path = ""       # file path/name if loaded from a .txt file
+
         
 
     def _build_layout(self) -> None:
@@ -74,6 +78,9 @@ class SpeakNotesApp:
 
         self.text_box = tk.Text(text_frame, wrap="word")
         self.text_box.pack(side="left", fill="both", expand=True)
+        # If the user edits the text manually, mark source as manual
+        self.text_box.bind("<Key>", self._on_text_edited)
+
 
         scrollbar = tk.Scrollbar(text_frame, command=self.text_box.yview)
         scrollbar.pack(side="right", fill="y")
@@ -137,6 +144,15 @@ class SpeakNotesApp:
         """
         user_text = self.text_box.get("1.0", "end").strip()
         return user_text
+    
+    def _on_text_edited(self, event: tk.Event) -> None:
+        """
+        Marks the text source as manual when the user edits the text box.
+        """
+        # If the user types anything, we consider it manual input.
+        self.text_source = "manual"
+        self.text_source_path = ""
+
 
     def get_settings(self) -> TTSSettings:
         """
@@ -189,6 +205,10 @@ class SpeakNotesApp:
 
         self.text_box.delete("1.0", "end")
         self.text_box.insert("1.0", content)
+
+        self.text_source = "txt"
+        self.text_source_path = str(Path(file_path))
+
         self.status_var.set(f"Loaded: {Path(file_path).name}")
 
     def preview(self) -> None:
@@ -217,7 +237,8 @@ class SpeakNotesApp:
         self.root.update_idletasks()
 
         synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
-        append_history(create_entry(out_path, settings, "export", user_text))
+        append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
+
 
         self.status_var.set(f"Saved: {out_path}")
 
@@ -238,7 +259,7 @@ class SpeakNotesApp:
         self.root.update_idletasks()
 
         synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
-        append_history(create_entry(out_path, settings, "both", user_text))
+        append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
 
         self.status_var.set(f"Preview + saved: {out_path}")
 
@@ -259,7 +280,7 @@ class SpeakNotesApp:
         tk.Button(controls, text="Play Selected", command=lambda: self._play_selected_history(tree)).pack(side="left", padx=8)
     
         # Treeview (table)
-        columns = ("date", "mode", "file", "voice", "rate", "volume", "text_preview")
+        columns = ("date", "mode", "source", "file", "voice", "rate", "volume", "text_preview")
     
         tree = ttk.Treeview(window, columns=columns, show="headings", height=14)
         tree.pack(fill="both", expand=True, padx=12, pady=(0, 12))
@@ -267,6 +288,7 @@ class SpeakNotesApp:
         # Define column headings
         tree.heading("date", text="Date")
         tree.heading("mode", text="Mode")
+        tree.heading("source", text="Source")
         tree.heading("file", text="File")
         tree.heading("voice", text="Voice")
         tree.heading("rate", text="Rate")
@@ -276,6 +298,7 @@ class SpeakNotesApp:
         # Define column widths (reasonable defaults)
         tree.column("date", width=140, anchor="w")
         tree.column("mode", width=70, anchor="w")
+        tree.column("source", width=80, anchor="w")
         tree.column("file", width=240, anchor="w")
         tree.column("voice", width=140, anchor="w")
         tree.column("rate", width=60, anchor="center")
@@ -302,6 +325,7 @@ class SpeakNotesApp:
         for entry in reversed(entries):
             date = entry.get("date", "")
             mode = entry.get("mode", "")
+            source = entry.get("source", "")
             file_path = entry.get("file", "")
             voice = entry.get("voice", "")
             rate = entry.get("rate", "")
@@ -311,7 +335,7 @@ class SpeakNotesApp:
             tree.insert(
                 "",
                 "end",
-                values=(date, mode, file_path, voice, rate, volume, text_preview),
+                values=(date, mode, source, file_path, voice, rate, volume, text_preview),
             )
     
     
@@ -330,7 +354,7 @@ class SpeakNotesApp:
             messagebox.showerror("Error", "Invalid selection data.")
             return
     
-        file_path = values[2]
+        file_path = values[3]
         if not file_path:
             messagebox.showerror("Error", "No file path found for this entry.")
             return
