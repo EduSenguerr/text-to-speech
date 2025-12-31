@@ -28,6 +28,8 @@ class SpeakNotesApp:
         # ---- Data we keep in the app (state) ----
         self.voice_items = list_voices()  # list of (voice_id, voice_name)
         self.voice_name_to_id = {name: vid for vid, name in self.voice_items}
+        self.last_export_path: Path | None = None
+
 
         # ---- UI Variables (Tkinter StringVars) ----
         config = load_config()
@@ -121,6 +123,8 @@ class SpeakNotesApp:
         tk.Button(btn_frame, text="Load .txt", command=self.load_txt).pack(side="left")
         tk.Button(btn_frame, text="History", command=self.open_history_window).pack(side="left", padx=8)
         tk.Button(btn_frame, text="Open Outputs", command=self.open_outputs_folder).pack(side="left", padx=8)
+        tk.Button(btn_frame, text="Reveal Last", command=self.reveal_last_export).pack(side="left", padx=8)
+        tk.Button(btn_frame, text="Open Last", command=self.open_last_export).pack(side="left", padx=8)
 
         tk.Button(btn_frame, text="Run", command=self.run_mode).pack(side="right", padx=6)
 
@@ -237,10 +241,51 @@ class SpeakNotesApp:
         self.root.update_idletasks()
 
         synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
+        self.last_export_path = out_path
         append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
-
-
         self.status_var.set(f"Saved: {out_path}")
+
+    def reveal_last_export(self) -> None:
+        """
+        Reveals the most recently exported audio file in the system file browser.
+        """
+        if not self.last_export_path or not self.last_export_path.exists():
+            messagebox.showinfo("No export yet", "No exported file found yet.")
+            return
+    
+        import subprocess
+        import sys
+    
+        path_str = str(self.last_export_path)
+    
+        if sys.platform == "darwin":
+            subprocess.run(["open", "-R", path_str])
+        elif sys.platform.startswith("win"):
+            subprocess.run(["explorer", "/select,", path_str])
+        else:
+            subprocess.run(["xdg-open", str(self.last_export_path.parent)])
+
+
+    def open_last_export(self) -> None:
+        """
+        Opens the most recently exported audio file with the default system app.
+        """
+        if not self.last_export_path or not self.last_export_path.exists():
+            messagebox.showinfo("No export yet", "No exported file found yet.")
+            return
+    
+        import subprocess
+        import sys
+    
+        path_str = str(self.last_export_path)
+    
+        if sys.platform == "darwin":
+            subprocess.run(["open", path_str])
+        elif sys.platform.startswith("win"):
+            subprocess.run(["start", "", path_str], shell=True)
+        else:
+            subprocess.run(["xdg-open", path_str])
+
 
     def both(self) -> None:
         user_text = self.get_user_text()
@@ -259,8 +304,8 @@ class SpeakNotesApp:
         self.root.update_idletasks()
 
         synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
+        self.last_export_path = out_path
         append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
-
         self.status_var.set(f"Preview + saved: {out_path}")
 
     def open_history_window(self) -> None:
