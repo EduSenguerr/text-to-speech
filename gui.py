@@ -46,6 +46,10 @@ class SpeakNotesApp:
 
         # ---- Build UI ----
         self._build_layout()
+        self.load_draft()
+        self._schedule_draft_autosave()
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
         self.preset_var.trace_add("write", lambda *_: self.save_current_config())
         self.voice_var.trace_add("write", lambda *_: self.save_current_config())
         self.mode_var.trace_add("write", lambda *_: self.save_current_config())
@@ -481,6 +485,57 @@ class SpeakNotesApp:
             "volume": float(self.volume_var.get()),
         })
 
+    def load_draft(self) -> None:
+        """
+        Loads draft.txt into the text box if it exists.
+        """
+        draft_path = Path("draft.txt")
+        if not draft_path.exists():
+            return
+    
+        try:
+            content = draft_path.read_text(encoding="utf-8")
+        except Exception:
+            return
+    
+        if content.strip():
+            self.text_box.delete("1.0", "end")
+            self.text_box.insert("1.0", content)
+            self.status_var.set("Draft restored.")
+
+
+    def save_draft(self) -> None:
+        """
+        Saves the current text box content to draft.txt.
+        """
+        user_text = self.get_user_text()
+        Path("draft.txt").write_text(user_text, encoding="utf-8")
+    
+    
+    def _schedule_draft_autosave(self) -> None:
+        """
+        Autosaves the draft every few seconds without blocking the UI.
+        """
+        try:
+            self.save_draft()
+        except Exception:
+            pass
+    
+        self.root.after(3000, self._schedule_draft_autosave)
+    
+    
+    def _on_close(self) -> None:
+        """
+        Ensures draft is saved before closing the app.
+        """
+        try:
+            self.save_draft()
+        except Exception:
+            pass
+    
+        self.root.destroy()
+    
+    
 
 
 
