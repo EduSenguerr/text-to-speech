@@ -3,6 +3,8 @@ from __future__ import annotations
 import tkinter as tk
 import subprocess
 import sys
+import threading
+
 
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
@@ -130,11 +132,18 @@ class SpeakNotesApp:
         tk.Button(btn_frame, text="Reveal Last", command=self.reveal_last_export).pack(side="left", padx=8)
         tk.Button(btn_frame, text="Open Last", command=self.open_last_export).pack(side="left", padx=8)
 
-        tk.Button(btn_frame, text="Run", command=self.run_mode).pack(side="right", padx=6)
+        self.run_btn = tk.Button(btn_frame, text="Run", command=self.run_mode)
+        self.run_btn.pack(side="right", padx=6)
+        
+        self.both_btn = tk.Button(btn_frame, text="Both", command=self.both)
+        self.both_btn.pack(side="right", padx=6)
+        
+        self.export_btn = tk.Button(btn_frame, text="Export", command=self.export)
+        self.export_btn.pack(side="right", padx=6)
+        
+        self.preview_btn = tk.Button(btn_frame, text="Preview", command=self.preview)
+        self.preview_btn.pack(side="right", padx=6)
 
-        tk.Button(btn_frame, text="Preview", command=self.preview).pack(side="right", padx=6)
-        tk.Button(btn_frame, text="Export", command=self.export).pack(side="right", padx=6)
-        tk.Button(btn_frame, text="Both", command=self.both).pack(side="right", padx=6)
         tk.Button(btn_frame, text="Play Latest", command=self.play_latest).pack(side="left", padx=8)
 
 
@@ -191,6 +200,33 @@ class SpeakNotesApp:
         safe = safe.replace(" ", "-")[:40] or "note"
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         return Path("outputs") / f"{timestamp}-{safe}.aiff"
+    
+    def _set_controls_enabled(self, enabled: bool) -> None:
+        """
+        Enables or disables main action buttons to prevent concurrent runs.
+        """
+        state = "normal" if enabled else "disabled"
+        for btn in (self.preview_btn, self.export_btn, self.both_btn, self.run_btn):
+            btn.config(state=state)
+
+
+    def _run_job(self, status_start: str, job_fn, status_done: str) -> None:
+        """
+        Runs a blocking TTS job on the main thread (macOS-safe), while keeping UI state consistent.
+        """
+        self._set_controls_enabled(False)
+        self.status_var.set(status_start)
+        self.root.update_idletasks()
+    
+        try:
+            job_fn()
+            self.status_var.set(status_done)
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            self.status_var.set("Error.")
+        finally:
+            self._set_controls_enabled(True)
+
 
     # ---- Actions ----
 
@@ -224,30 +260,31 @@ class SpeakNotesApp:
         if not user_text:
             messagebox.showwarning("Missing text", "Please enter or load text first.")
             return
-
+    
         settings = self.get_settings()
-        self.status_var.set("Previewing speech...")
-        self.root.update_idletasks()
+    
+        def job():
+            speak_now(text=user_text, settings=settings)
+    
+        self._run_job("Previewing speech...", job, "Preview finished.")
 
-        speak_now(text=user_text, settings=settings)
-        self.status_var.set("Preview finished.")
 
     def export(self) -> None:
         user_text = self.get_user_text()
         if not user_text:
             messagebox.showwarning("Missing text", "Please enter or load text first.")
             return
-
+    
         settings = self.get_settings()
         out_path = self.make_output_path(user_text)
+    
+        def job():
+            synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
+            self.last_export_path = out_path
+            append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
+    
+        self._run_job("Exporting audio file...", job, f"Saved: {out_path}")
 
-        self.status_var.set("Exporting audio file...")
-        self.root.update_idletasks()
-
-        synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
-        self.last_export_path = out_path
-        append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
-        self.status_var.set(f"Saved: {out_path}")
 
     def reveal_last_export(self) -> None:
         """
@@ -290,27 +327,23 @@ class SpeakNotesApp:
         else:
             subprocess.run(["xdg-open", path_str])
 
-
     def both(self) -> None:
         user_text = self.get_user_text()
         if not user_text:
             messagebox.showwarning("Missing text", "Please enter or load text first.")
             return
-
+    
         settings = self.get_settings()
+    
+        def job():
+            speak_now(text=user_text, settings=settings)
+            out_path = self.make_output_path(user_text)
+            synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
+            self.last_export_path = out_path
+            append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
+    
+        self._run_job("Preview + export running...", job, "Preview + export finished.")
 
-        self.status_var.set("Previewing speech...")
-        self.root.update_idletasks()
-        speak_now(text=user_text, settings=settings)
-
-        out_path = self.make_output_path(user_text)
-        self.status_var.set("Exporting audio file...")
-        self.root.update_idletasks()
-
-        synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
-        self.last_export_path = out_path
-        append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
-        self.status_var.set(f"Preview + saved: {out_path}")
 
     def open_history_window(self) -> None:
         """
