@@ -32,7 +32,6 @@ class SpeakNotesApp:
         self.voice_name_to_id = {name: vid for vid, name in self.voice_items}
         self.last_export_path: Path | None = None
 
-
         # ---- UI Variables (Tkinter StringVars) ----
         config = load_config()
 
@@ -41,26 +40,35 @@ class SpeakNotesApp:
         self.mode_var = tk.StringVar(value=config.get("mode", "export"))
         self.rate_var = tk.IntVar(value=int(config.get("rate", 175)))
         self.volume_var = tk.DoubleVar(value=float(config.get("volume", 1.0)))
-        self.rate_var.trace_add("write", lambda *_: self.save_current_config())
-        self.volume_var.trace_add("write", lambda *_: self.save_current_config())
-
+     
         self.status_var = tk.StringVar(value="Ready.")
+        
+        # Flag to prevent preset/slider feedback loops
+        self._is_applying_preset = False
 
         # ---- Build UI ----
         self._build_layout()
+
+        # Apply preset defaults on startup ONLY if preset is not custom
+        if self.preset_var.get() != "custom":
+            self.apply_preset_to_sliders()
+        
+        # Trace listeners (run after UI is ready and initial values are set)
+        self.preset_var.trace_add("write", lambda *_: (self.apply_preset_to_sliders(), self.save_current_config()))
+        self.voice_var.trace_add("write", lambda *_: self.save_current_config())
+        self.mode_var.trace_add("write", lambda *_: self.save_current_config())
+        self.rate_var.trace_add("write", lambda *_: (self.on_slider_changed(), self.save_current_config()))
+        self.volume_var.trace_add("write", lambda *_: (self.on_slider_changed(), self.save_current_config()))
+
+        # Track where the current text came from
+        self.text_source = "manual"      
+        self.text_source_path = ""       
+
         self.load_draft()
         self._schedule_draft_autosave()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-        self.preset_var.trace_add("write", lambda *_: self.save_current_config())
-        self.voice_var.trace_add("write", lambda *_: self.save_current_config())
-        self.mode_var.trace_add("write", lambda *_: self.save_current_config())
-        # Track where the current text came from
-        self.text_source = "manual"      # "manual" or "txt"
-        self.text_source_path = ""       # file path/name if loaded from a .txt file
-
         
-
     def _build_layout(self) -> None:
         # Top row: preset + voice
         top_frame = tk.Frame(self.root)
@@ -189,6 +197,30 @@ class SpeakNotesApp:
                 return TTSSettings(rate=rate, volume=volume, voice_id=voice_id)
     
         return TTSSettings(rate=rate, volume=volume, voice_id=None)
+
+    def apply_preset_to_sliders(self) -> None:
+        """
+        Applies the selected preset defaults to the rate/volume sliders.
+        """
+        preset_key = self.preset_var.get().strip().lower()
+        preset_settings = PRESETS.get(preset_key, PRESETS["study"])
+    
+        self._is_applying_preset = True
+        try:
+            self.rate_var.set(int(preset_settings.rate))
+            self.volume_var.set(float(preset_settings.volume))
+        finally:
+            self._is_applying_preset = False
+    
+    def on_slider_changed(self) -> None:
+        """
+        Marks the preset as 'custom' when the user manually changes sliders.
+        """
+        if self._is_applying_preset:
+            return
+    
+        if self.preset_var.get() != "custom":
+            self.preset_var.set("custom")
 
 
     def make_output_path(self, user_text: str) -> Path:

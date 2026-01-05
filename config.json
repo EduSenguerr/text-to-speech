@@ -1,7 +1,7 @@
 {
-  "preset": "relax",
+  "preset": "custom",
   "voice": "Default (system)",
   "mode": "export",
-  "rate": 120,
-  "volume": 0.4
+  "rate": 150,
+  "volume": 0.85
 }
