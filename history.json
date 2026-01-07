@@ -1,1 +1,247 @@
-[]
+[
+  {
+    "date": "2025-12-29T21:58:09",
+    "file": "outputs/20251229-215807-hello-there-i-hope-you-are-doing-well-do.aiff",
+    "rate": 175,
+    "volume": 1.0,
+    "voice": "default",
+    "mode": "export",
+    "text_preview": "Hello there! i hope you are doing well, don't forget you are"
+  },
+  {
+    "date": "2025-12-29T22:20:05",
+    "file": "outputs/20251229-222003-testing-history-logging-feature-in-speak.aiff",
+    "rate": 175,
+    "volume": 1.0,
+    "voice": "default",
+    "mode": "export",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2025-12-29T22:41:34",
+    "file": "outputs/20251229-224131-hi-im-michael-scott-dunder-miffin-scrant.aiff",
+    "rate": 175,
+    "volume": 1.0,
+    "voice": "default",
+    "mode": "export",
+    "text_preview": "Hi! i'm Michael Scott, Dunder Miffin Scranton regional manag"
+  },
+  {
+    "date": "2025-12-29T23:38:51",
+    "file": "outputs/20251229-233849-hi-im-michael-scott-parkour.aiff",
+    "rate": 120,
+    "volume": 0.4,
+    "voice": "default",
+    "mode": "export",
+    "text_preview": "Hi! I'm Michael Scott. PARKOUR!!"
+  },
+  {
+    "date": "2025-12-30T18:04:27",
+    "file": "outputs/20251230-180420-wikipedia-is-the-best-thing-ever-anyone-.aiff",
+    "rate": 120,
+    "volume": 0.4,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "\"Wikipedia is the best thing ever. Anyone in the world can w"
+  },
+  {
+    "date": "2025-12-30T18:05:50",
+    "file": "outputs/20251230-180547-testing-history-logging-feature-in-speak.aiff",
+    "rate": 190,
+    "volume": 0.6,
+    "voice": "default",
+    "mode": "export",
+    "source": "txt",
+    "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/test.txt",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2025-12-30T18:06:40",
+    "file": "outputs/20251230-180637-testing-history-logging-feature-in-speak.aiff",
+    "rate": 190,
+    "volume": 0.6,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2025-12-30T18:24:58",
+    "file": "outputs/20251230-182454-i-dont-want-somebody-sucking-up-to-me-be.aiff",
+    "rate": 190,
+    "volume": 0.6,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "\"I don't want somebody sucking up to me because they think I"
+  },
+  {
+    "date": "2025-12-30T18:26:13",
+    "file": "outputs/20251230-182610-i-dont-want-somebody-sucking-up-to-me-be.aiff",
+    "rate": 190,
+    "volume": 0.6,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "\"I don't want somebody sucking up to me because they think I"
+  },
+  {
+    "date": "2026-01-04T22:50:43",
+    "file": "outputs/20260104-225039-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 190,
+    "volume": 0.6,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-04T22:51:09",
+    "file": "outputs/20260104-225106-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 190,
+    "volume": 0.6,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-06T21:55:01",
+    "file": "outputs/20260106-215457-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-06T21:56:03",
+    "file": "outputs/20260106-215559-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-06T22:04:59",
+    "file": "outputs/20260106-220455-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-06T22:05:15",
+    "file": "outputs/20260106-220512-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-06T22:06:31",
+    "file": "outputs/20260106-220627-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-06T22:07:14",
+    "file": "outputs/20260106-220710-hi-there-im-michael-scott-regional-manag.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
+  },
+  {
+    "date": "2026-01-06T22:44:05",
+    "file": "outputs/20260106-224400-part-001-of-003-paragraph-one-this-will-be-exp.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "export",
+    "source": "txt",
+    "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/bulk_test.txt",
+    "text_preview": "Paragraph one. This will be exported as audio part 1."
+  },
+  {
+    "date": "2026-01-06T22:44:07",
+    "file": "outputs/20260106-224405-part-002-of-003-paragraph-two-this-will-be-exp.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "export",
+    "source": "txt",
+    "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/bulk_test.txt",
+    "text_preview": "Paragraph two. This will be exported as audio part 2."
+  },
+  {
+    "date": "2026-01-06T22:44:10",
+    "file": "outputs/20260106-224407-part-003-of-003-paragraph-three-this-will-be-e.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "export",
+    "source": "txt",
+    "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/bulk_test.txt",
+    "text_preview": "Paragraph three. This will be exported as audio part 3."
+  },
+  {
+    "date": "2026-01-06T23:03:44",
+    "file": "outputs/20260106-230337-testing-history-logging-feature-in-speak.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2026-01-06T23:04:08",
+    "file": "outputs/20260106-230404-testing-history-logging-feature-in-speak.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2026-01-06T23:04:41",
+    "file": "outputs/20260106-230437-testing-history-logging-feature-in-speak.aiff",
+    "rate": 150,
+    "volume": 0.85,
+    "voice": "default",
+    "mode": "both",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  }
+]
