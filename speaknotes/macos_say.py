@@ -21,3 +21,19 @@ def say_to_file(text: str, output_path: Path, voice_name: str | None = None, rat
     cmd.append(text)
 
     subprocess.run(cmd, check=True)
+
+def say_now(text: str, voice_name: str | None = None, rate_wpm: int | None = None) -> None:
+    """
+    Uses macOS 'say' to speak text immediately.
+    """
+    cmd = ["say"]
+
+    if voice_name and voice_name != "Default (system)":
+        cmd += ["-v", voice_name]
+
+    if rate_wpm:
+        cmd += ["-r", str(rate_wpm)]
+
+    cmd.append(text)
+
+    subprocess.run(cmd, check=True)

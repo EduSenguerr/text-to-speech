@@ -16,7 +16,7 @@ from speaknotes.tts import TTSSettings, list_voices, speak_now, synthesize_to_fi
 from speaknotes.history_utils import append_history, create_entry, load_history
 from speaknotes.config_utils import load_config, save_config
 from speaknotes.text_utils import split_into_paragraphs
-from speaknotes.macos_say import say_to_file
+from speaknotes.macos_say import say_to_file, say_now
 
 
 
@@ -328,12 +328,28 @@ class SpeakNotesApp:
             messagebox.showwarning("Missing text", "Please enter or load text first.")
             return
     
-        settings = self.get_settings()
+        if sys.platform != "darwin":
+            settings = self.get_settings()
+            self._run_job("Previewing speech...", lambda: speak_now(text=user_text, settings=settings))
+            return
     
-        def job():
-            speak_now(text=user_text, settings=settings)
+        voice_name = self.voice_var.get()
+        rate_wpm = int(self.rate_var.get())
     
-        self._run_job("Previewing speech...", job, "Preview finished.")
+        self._set_controls_enabled(False)
+        self.set_status("Starting preview...")
+    
+        def worker() -> None:
+            try:
+                say_now(text=user_text, voice_name=voice_name, rate_wpm=rate_wpm)
+                self.set_status_async("Preview finished.")
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
+                self.set_status_async("Error.")
+            finally:
+                self.root.after(0, lambda: self._set_controls_enabled(True))
+    
+        threading.Thread(target=worker, daemon=True).start()
 
 
     def export(self) -> None:
@@ -345,12 +361,38 @@ class SpeakNotesApp:
         settings = self.get_settings()
         out_path = self.make_output_path(user_text)
     
-        def job():
-            synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
-            self.last_export_path = out_path
-            append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
+        # Non-macOS fallback uses pyttsx3 on main thread
+        if sys.platform != "darwin":
+            def job() -> None:
+                synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
+                self.last_export_path = out_path
+                append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
     
-        self._run_job("Exporting audio file...", job, f"Saved: {out_path}")
+            self._run_job("Starting export...", job, f"Saved: {out_path}")
+            return
+    
+        voice_name = self.voice_var.get()
+        rate_wpm = int(self.rate_var.get())
+    
+        self._set_controls_enabled(False)
+        self.set_status("Starting export...")
+    
+        def worker() -> None:
+            try:
+                self.set_status_async("Exporting audio file...")
+                say_to_file(text=user_text, output_path=out_path, voice_name=voice_name, rate_wpm=rate_wpm)
+    
+                self.last_export_path = out_path
+                append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
+    
+                self.set_status_async(f"Saved: {out_path}")
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
+                self.set_status_async("Error.")
+            finally:
+                self.root.after(0, lambda: self._set_controls_enabled(True))
+    
+        threading.Thread(target=worker, daemon=True).start()
 
     def bulk_export(self) -> None:
         user_text = self.get_user_text()
@@ -464,30 +506,44 @@ class SpeakNotesApp:
     
         settings = self.get_settings()
     
-        def job() -> None:
-            self.set_status("Previewing speech...")
-            speak_now(text=user_text, settings=settings)
+        # Non-macOS fallback uses pyttsx3 on main thread
+        if sys.platform != "darwin":
+            def job() -> None:
+                speak_now(text=user_text, settings=settings)
+                out_path = self.make_output_path(user_text)
+                synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
+                self.last_export_path = out_path
+                append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
     
-            self.set_status("Exporting audio file...")
-            out_path = self.make_output_path(user_text)
-            synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
+            self._run_job("Starting both...", job, "Preview + export finished.")
+            return
     
-            self.last_export_path = out_path
-            append_history(
-                create_entry(
-                    out_path,
-                    settings,
-                    "both",
-                    user_text,
-                    self.text_source,
-                    self.text_source_path,
-                )
-            )
+        voice_name = self.voice_var.get()
+        rate_wpm = int(self.rate_var.get())
     
-            self.set_status(f"Preview + saved: {out_path}")
+        self._set_controls_enabled(False)
+        self.set_status("Starting both...")
     
-        self._run_job("Starting both...", job)
-
+        def worker() -> None:
+            try:
+                self.set_status_async("Previewing speech...")
+                say_now(text=user_text, voice_name=voice_name, rate_wpm=rate_wpm)
+    
+                self.set_status_async("Exporting audio file...")
+                out_path = self.make_output_path(user_text)
+                say_to_file(text=user_text, output_path=out_path, voice_name=voice_name, rate_wpm=rate_wpm)
+    
+                self.last_export_path = out_path
+                append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
+    
+                self.set_status_async(f"Preview + saved: {out_path}")
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
+                self.set_status_async("Error.")
+            finally:
+                self.root.after(0, lambda: self._set_controls_enabled(True))
+    
+        threading.Thread(target=worker, daemon=True).start()
 
     def open_history_window(self) -> None:
         """
