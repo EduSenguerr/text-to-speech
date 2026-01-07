@@ -161,6 +161,14 @@ class SpeakNotesApp:
 
         tk.Label(status_frame, textvariable=self.status_var, anchor="w").pack(fill="x")
 
+    def set_status(self, message: str) -> None:
+        """
+        Updates the status line and flushes UI redraw tasks.
+        """
+        self.status_var.set(message)
+        self.root.update_idletasks()
+
+
     # ---- Helpers ----
 
     def get_user_text(self) -> str:
@@ -242,23 +250,25 @@ class SpeakNotesApp:
             btn.config(state=state)
 
 
-    def _run_job(self, status_start: str, job_fn, status_done: str) -> None:
+    def _run_job(self, status_start: str, job_fn, status_done: str | None = None) -> None:
         """
-        Runs a blocking TTS job on the main thread (macOS-safe), while keeping UI state consistent.
+        Runs a blocking job on the Tkinter main thread (macOS-safe) and keeps UI state consistent.
+        The job is scheduled with 'after' so the start status is visible before work begins.
         """
         self._set_controls_enabled(False)
-        self.status_var.set(status_start)
-        self.root.update_idletasks()
+        self.set_status(status_start)
     
-        try:
-            job_fn()
-            self.status_var.set(status_done)
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
-            self.status_var.set("Error.")
-        finally:
-            self._set_controls_enabled(True)
-
+        def run_job() -> None:
+            try:
+                job_fn()
+                if status_done:
+                    self.set_status(status_done)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+                self.set_status("Error.")
+            finally:
+                self._set_controls_enabled(True)
+    
 
     # ---- Actions ----
 
@@ -367,14 +377,29 @@ class SpeakNotesApp:
     
         settings = self.get_settings()
     
-        def job():
+        def job() -> None:
+            self.set_status("Previewing speech...")
             speak_now(text=user_text, settings=settings)
+    
+            self.set_status("Exporting audio file...")
             out_path = self.make_output_path(user_text)
             synthesize_to_file(text=user_text, output_path=out_path, settings=settings)
-            self.last_export_path = out_path
-            append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
     
-        self._run_job("Preview + export running...", job, "Preview + export finished.")
+            self.last_export_path = out_path
+            append_history(
+                create_entry(
+                    out_path,
+                    settings,
+                    "both",
+                    user_text,
+                    self.text_source,
+                    self.text_source_path,
+                )
+            )
+    
+            self.set_status(f"Preview + saved: {out_path}")
+    
+        self._run_job("Starting both...", job)
 
 
     def open_history_window(self) -> None:
