@@ -6,6 +6,7 @@ import sys
 import threading
 
 
+
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 from datetime import datetime
@@ -14,6 +15,10 @@ from speaknotes.presets import PRESETS
 from speaknotes.tts import TTSSettings, list_voices, speak_now, synthesize_to_file
 from speaknotes.history_utils import append_history, create_entry, load_history
 from speaknotes.config_utils import load_config, save_config
+from speaknotes.text_utils import split_into_paragraphs
+from speaknotes.macos_say import say_to_file
+
+
 
 
 
@@ -153,6 +158,8 @@ class SpeakNotesApp:
         self.preview_btn.pack(side="right", padx=6)
 
         tk.Button(btn_frame, text="Play Latest", command=self.play_latest).pack(side="left", padx=8)
+        tk.Button(btn_frame, text="Bulk Export", command=self.bulk_export).pack(side="left", padx=8)
+
 
 
         # Status line
@@ -167,6 +174,13 @@ class SpeakNotesApp:
         """
         self.status_var.set(message)
         self.root.update_idletasks()
+
+    def set_status_async(self, message: str) -> None:
+        """
+        Thread-safe status update (scheduled on the Tk main loop).
+        """
+        self.root.after(0, lambda: self.set_status(message))
+
 
 
     # ---- Helpers ----
@@ -240,6 +254,17 @@ class SpeakNotesApp:
         safe = safe.replace(" ", "-")[:40] or "note"
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         return Path("outputs") / f"{timestamp}-{safe}.aiff"
+    
+    def make_output_path_part(self, user_text: str, part_index: int, total_parts: int) -> Path:
+        """
+        Creates a timestamped filename for a chunked export (part-XXX).
+        """
+        safe = "".join(ch for ch in user_text.lower() if ch.isalnum() or ch in (" ", "-", "_")).strip()
+        safe = safe.replace(" ", "-")[:30] or "note"
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        part = f"part-{part_index:03d}-of-{total_parts:03d}"
+        return Path("outputs") / f"{timestamp}-{part}-{safe}.aiff"
+
     
     def _set_controls_enabled(self, enabled: bool) -> None:
         """
@@ -326,6 +351,68 @@ class SpeakNotesApp:
             append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
     
         self._run_job("Exporting audio file...", job, f"Saved: {out_path}")
+
+    def bulk_export(self) -> None:
+        user_text = self.get_user_text()
+        if not user_text:
+            messagebox.showwarning("Missing text", "Please enter or load text first.")
+            return
+    
+        if self.text_source != "txt":
+            messagebox.showwarning("Bulk export", "Bulk export is designed for .txt input. Load a .txt file first.")
+            return
+    
+        parts = split_into_paragraphs(user_text)
+        if len(parts) < 2:
+            messagebox.showinfo("Bulk export", "Only one paragraph found. Use Export instead.")
+            return
+    
+        if sys.platform != "darwin":
+            messagebox.showinfo("Bulk export", "Bulk export is currently implemented for macOS only.")
+            return
+    
+        settings = self.get_settings()
+        voice_name = self.voice_var.get()
+        rate_wpm = int(self.rate_var.get())
+    
+        self._set_controls_enabled(False)
+        self.set_status("Starting bulk export...")
+    
+        def worker() -> None:
+            try:
+                total = len(parts)
+                for i, chunk in enumerate(parts, start=1):
+                    self.set_status_async(f"Exporting {i}/{total}...")
+    
+                    out_path = self.make_output_path_part(chunk, i, total)
+    
+                    say_to_file(
+                        text=chunk,
+                        output_path=out_path,
+                        voice_name=voice_name,
+                        rate_wpm=rate_wpm,
+                    )
+    
+                    self.last_export_path = out_path
+                    append_history(
+                        create_entry(
+                            out_path,
+                            settings,
+                            "export",
+                            chunk,
+                            self.text_source,
+                            self.text_source_path,
+                        )
+                    )
+    
+                self.set_status_async(f"Bulk export finished: {total} files")
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
+                self.set_status_async("Error.")
+            finally:
+                self.root.after(0, lambda: self._set_controls_enabled(True))
+    
+        threading.Thread(target=worker, daemon=True).start()
 
 
     def reveal_last_export(self) -> None:
