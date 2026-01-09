@@ -36,7 +36,7 @@ def create_entry(file: Path, settings: Any, mode: str, text: str, source: str = 
     preview_snippet = text[:60].replace("\n", " ")
     return {
         "date": datetime.now().isoformat(timespec="seconds"),
-        "file": str(file),
+        "file": str(file.resolve()),
         "rate": settings.rate,
         "volume": settings.volume,
         "voice": settings.voice_id or "default",

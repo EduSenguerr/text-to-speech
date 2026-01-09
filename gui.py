@@ -5,8 +5,6 @@ import subprocess
 import sys
 import threading
 
-
-
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 from datetime import datetime
@@ -18,8 +16,8 @@ from speaknotes.config_utils import load_config, save_config
 from speaknotes.text_utils import split_into_paragraphs
 from speaknotes.macos_say import say_to_file, say_now
 
-
-
+APP_ROOT = Path(__file__).resolve().parent
+APP_CWD = Path.cwd()
 
 
 class SpeakNotesApp:
@@ -253,7 +251,7 @@ class SpeakNotesApp:
         safe = "".join(ch for ch in user_text.lower() if ch.isalnum() or ch in (" ", "-", "_")).strip()
         safe = safe.replace(" ", "-")[:40] or "note"
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        return Path("outputs") / f"{timestamp}-{safe}.aiff"
+        return (APP_ROOT / "outputs") / f"{timestamp}-{safe}.aiff"
     
     def make_output_path_part(self, user_text: str, part_index: int, total_parts: int) -> Path:
         """
@@ -263,7 +261,7 @@ class SpeakNotesApp:
         safe = safe.replace(" ", "-")[:30] or "note"
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         part = f"part-{part_index:03d}-of-{total_parts:03d}"
-        return Path("outputs") / f"{timestamp}-{part}-{safe}.aiff"
+        return (APP_ROOT / "outputs") / f"{timestamp}-{part}-{safe}.aiff"
 
     
     def _set_controls_enabled(self, enabled: bool) -> None:
@@ -558,11 +556,14 @@ class SpeakNotesApp:
         controls.pack(fill="x", padx=12, pady=10)
     
         tk.Button(controls, text="Refresh", command=lambda: self._populate_history(tree)).pack(side="left")
-    
         tk.Button(controls, text="Play Selected", command=lambda: self._play_selected_history(tree)).pack(side="left", padx=8)
+        tk.Button(controls, text="Reveal Selected", command=lambda: self._reveal_selected_history(tree)).pack(side="left", padx=8)
+        tk.Button(controls, text="Open Selected", command=lambda: self._open_selected_history(tree)).pack(side="left", padx=8)
+        tk.Button(controls, text="Copy Path", command=lambda: self._copy_selected_history_path(tree)).pack(side="left", padx=8)
+        
     
         # Treeview (table)
-        columns = ("date", "mode", "source", "file", "voice", "rate", "volume", "text_preview")
+        columns = ("date", "mode", "source","source_file", "file", "voice", "rate", "volume", "text_preview")
     
         tree = ttk.Treeview(window, columns=columns, show="headings", height=14)
         tree.pack(fill="both", expand=True, padx=12, pady=(0, 12))
@@ -571,6 +572,7 @@ class SpeakNotesApp:
         tree.heading("date", text="Date")
         tree.heading("mode", text="Mode")
         tree.heading("source", text="Source")
+        tree.heading("source_file", text="Source File")
         tree.heading("file", text="File")
         tree.heading("voice", text="Voice")
         tree.heading("rate", text="Rate")
@@ -581,6 +583,7 @@ class SpeakNotesApp:
         tree.column("date", width=140, anchor="w")
         tree.column("mode", width=70, anchor="w")
         tree.column("source", width=80, anchor="w")
+        tree.column("source_file", width=160, anchor="w")
         tree.column("file", width=240, anchor="w")
         tree.column("voice", width=140, anchor="w")
         tree.column("rate", width=60, anchor="center")
@@ -609,6 +612,8 @@ class SpeakNotesApp:
             mode = entry.get("mode", "")
             source = entry.get("source", "")
             file_path = entry.get("file", "")
+            source_path = entry.get("source_path", "")
+            source_file = Path(source_path).name if source_path else ""
             voice = entry.get("voice", "")
             rate = entry.get("rate", "")
             volume = entry.get("volume", "")
@@ -617,45 +622,129 @@ class SpeakNotesApp:
             tree.insert(
                 "",
                 "end",
-                values=(date, mode, source, file_path, voice, rate, volume, text_preview),
+                values=(date, mode, source, source_file, file_path, voice, rate, volume, text_preview),
             )
     
     
     def _play_selected_history(self, tree: ttk.Treeview) -> None:
+         """
+         Plays the audio file from the selected history row (macOS uses afplay).
+         """
+         audio_path = self._get_selected_history_audio_path(tree)
+         if not audio_path:
+             return
+        
+         import subprocess
+         import sys
+        
+         if sys.platform == "darwin":
+             subprocess.run(["afplay", str(audio_path)])
+         else:
+             messagebox.showinfo("Unsupported", "Auto-play is currently implemented only for macOS.")
+        
+    def _resolve_history_path(self, raw_path: str) -> Path:
         """
-        Plays the audio file from the selected history row (macOS uses afplay).
+        Resolves a history path that may be relative to different run locations.
         """
+        p = Path(raw_path)
+    
+        if p.is_absolute():
+            return p
+    
+        # Try app root first (recommended location)
+        candidate = (APP_ROOT / p).resolve()
+        if candidate.exists():
+            return candidate
+    
+        # Fallback: try the working directory used when the file was created
+        candidate = (APP_CWD / p).resolve()
+        return candidate
+    
+    
+
+    def _get_selected_history_audio_path(self, tree: ttk.Treeview) -> Path | None:
         selection = tree.selection()
         if not selection:
             messagebox.showinfo("No selection", "Please select a row first.")
-            return
+            return None
     
-        item_id = selection[0]
-        values = tree.item(item_id, "values")
-        if not values or len(values) < 3:
+        values = tree.item(selection[0], "values")
+        if not values:
             messagebox.showerror("Error", "Invalid selection data.")
-            return
+            return None
     
-        file_path = values[3]
+        # columns: date, mode, source, source_file, file, ...
+        if len(values) < 5:
+            messagebox.showerror("Error", "Invalid selection data.")
+            return None
+    
+        file_path = values[4]
         if not file_path:
             messagebox.showerror("Error", "No file path found for this entry.")
-            return
+            return None
     
         audio_path = Path(file_path)
+        if not audio_path.is_absolute():
+            audio_path = (APP_ROOT / audio_path).resolve()
+
         if not audio_path.exists():
             messagebox.showerror("File not found", f"Audio file not found:\n{audio_path}")
+            return None
+
+
+    
+        return audio_path
+    
+    def _reveal_selected_history(self, tree: ttk.Treeview) -> None:
+        """
+        Reveals the selected history audio file in the system file browser.
+        """
+        audio_path = self._get_selected_history_audio_path(tree)
+        if not audio_path:
             return
     
-        # Reuse the same playback logic as Play Latest (macOS only, for now)
         import subprocess
         import sys
     
         if sys.platform == "darwin":
-            subprocess.run(["afplay", str(audio_path)])
+            subprocess.run(["open", "-R", str(audio_path)])
+        elif sys.platform.startswith("win"):
+            subprocess.run(["explorer", "/select,", str(audio_path)])
         else:
-            messagebox.showinfo("Unsupported", "Auto-play is currently implemented only for macOS.")
-
+            subprocess.run(["xdg-open", str(audio_path.parent)])
     
+    def _open_selected_history(self, tree: ttk.Treeview) -> None:
+        """
+        Opens the selected history audio file with the default system app.
+        """
+        audio_path = self._get_selected_history_audio_path(tree)
+        if not audio_path:
+            return
+    
+        import subprocess
+        import sys
+    
+        if sys.platform == "darwin":
+            subprocess.run(["open", str(audio_path)])
+        elif sys.platform.startswith("win"):
+            subprocess.run(["start", "", str(audio_path)], shell=True)
+        else:
+            subprocess.run(["xdg-open", str(audio_path)])
+    
+    def _copy_selected_history_path(self, tree: ttk.Treeview) -> None:
+        """
+        Copies the selected history audio path to the clipboard.
+        """
+        audio_path = self._get_selected_history_audio_path(tree)
+        if not audio_path:
+            return
+    
+        self.root.clipboard_clear()
+        self.root.clipboard_append(str(audio_path))
+        self.set_status(f"Copied path: {audio_path.name}")
+    
+    
+
     def open_outputs_folder(self) -> None:
         """
         Opens the outputs folder in the system file browser.
@@ -722,7 +811,7 @@ class SpeakNotesApp:
         """
         Loads draft.txt into the text box if it exists.
         """
-        draft_path = Path("draft.txt")
+        draft_path = APP_ROOT / "draft.txt"
         if not draft_path.exists():
             return
     
@@ -742,7 +831,7 @@ class SpeakNotesApp:
         Saves the current text box content to draft.txt.
         """
         user_text = self.get_user_text()
-        Path("draft.txt").write_text(user_text, encoding="utf-8")
+        Path(APP_ROOT / "draft.txt").write_text(user_text, encoding="utf-8")
     
     
     def _schedule_draft_autosave(self) -> None:
