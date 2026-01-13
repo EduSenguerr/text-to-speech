@@ -45,7 +45,8 @@ class SpeakNotesApp:
         self.volume_var = tk.DoubleVar(value=float(config.get("volume", 1.0)))
      
         self.status_var = tk.StringVar(value="Ready.")
-        
+        self.history_search_var = tk.StringVar(value="")
+
         # Flag to prevent preset/slider feedback loops
         self._is_applying_preset = False
 
@@ -291,6 +292,23 @@ class SpeakNotesApp:
                 self.set_status("Error.")
             finally:
                 self._set_controls_enabled(True)
+
+    
+    def filter_history(self, tree: ttk.Treeview) -> None:
+        search = self.history_search_var.get().strip().lower()
+    
+        for item in tree.get_children():
+            values = tree.item(item, "values")
+            row_text = " ".join(values).lower()
+            file_text = tree.item(item, "text").lower()
+    
+            if not search or search in row_text or search in file_text:
+                tree.item(item, open=True)
+                tree.detach(item)
+                tree.reattach(item, "", "end")
+            else:
+                tree.detach(item)
+    
     
 
     # ---- Actions ----
@@ -547,26 +565,28 @@ class SpeakNotesApp:
         """
         Opens a separate window that displays history.json entries in a table (Treeview).
         """
-        window = tk.Toplevel(self.root)
-        window.title("SpeakNotes — History")
-        window.geometry("900x420")
+        history_win = tk.Toplevel(self.root)
+        history_win.title("SpeakNotes — History")
+        history_win.geometry("900x420")
     
-        # Top controls (Refresh + Play Selected)
-        controls = tk.Frame(window)
-        controls.pack(fill="x", padx=12, pady=10)
-    
-        tk.Button(controls, text="Refresh", command=lambda: self._populate_history(tree)).pack(side="left")
-        tk.Button(controls, text="Play Selected", command=lambda: self._play_selected_history(tree)).pack(side="left", padx=8)
-        tk.Button(controls, text="Reveal Selected", command=lambda: self._reveal_selected_history(tree)).pack(side="left", padx=8)
-        tk.Button(controls, text="Open Selected", command=lambda: self._open_selected_history(tree)).pack(side="left", padx=8)
-        tk.Button(controls, text="Copy Path", command=lambda: self._copy_selected_history_path(tree)).pack(side="left", padx=8)
+        search_frame = tk.Frame(history_win)
+        search_frame.pack(fill="x", padx=10, pady=(10, 6))
         
+        tk.Label(search_frame, text="Search:").pack(side="left")
+        
+        search_var = tk.StringVar(value="")
+        search_entry = tk.Entry(search_frame, textvariable=search_var, width=32)
+        search_entry.pack(side="left", padx=8)
+        search_entry.focus_set()
+
+           # Top controls (Refresh + Play Selected)
+        controls = tk.Frame(history_win)
+        controls.pack(fill="x", padx=10, pady=(0, 10))
     
         # Treeview (table)
         columns = ("date", "mode", "source","source_file", "file", "voice", "rate", "volume", "text_preview")
-    
-        tree = ttk.Treeview(window, columns=columns, show="headings", height=14)
-        tree.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+        tree = ttk.Treeview(history_win, columns=columns, show="headings", height=14)
+        tree.pack(fill="both", expand=True, padx=10, pady=(0, 10))
     
         # Define column headings
         tree.heading("date", text="Date")
@@ -589,10 +609,48 @@ class SpeakNotesApp:
         tree.column("rate", width=60, anchor="center")
         tree.column("volume", width=70, anchor="center")
         tree.column("text_preview", width=260, anchor="w")
-    
+
         # Populate initial data
         self._populate_history(tree)
+        all_rows = list(tree.get_children())
+        
+        def apply_filter() -> None:
+            query = search_var.get().strip().lower()
+        
+            # If query is empty, restore everything
+            if not query:
+                for item_id in all_rows:
+                    if not tree.exists(item_id):
+                        continue
+                    tree.reattach(item_id, "", "end")
+                return
+        
+            for item_id in all_rows:
+                if not tree.exists(item_id):
+                    continue
+        
+                values = tree.item(item_id, "values")
+                row_blob = " ".join(str(v) for v in values).lower()
+        
+                if query in row_blob:
+                    tree.reattach(item_id, "", "end")
+                else:
+                    tree.detach(item_id)
 
+        def refresh_table() -> None:
+            nonlocal all_rows
+            self._populate_history(tree)
+            all_rows = list(tree.get_children())
+            apply_filter()
+
+        tk.Button(controls, text="Refresh", command=refresh_table).pack(side="left", padx=6)
+        tk.Button(controls, text="Play Selected", command=lambda: self._play_selected_history(tree)).pack(side="left", padx=8)
+        tk.Button(controls, text="Reveal Selected", command=lambda: self._reveal_selected_history(tree)).pack(side="left", padx=8)
+        tk.Button(controls, text="Open Selected", command=lambda: self._open_selected_history(tree)).pack(side="left", padx=8)
+        tk.Button(controls, text="Copy Path", command=lambda: self._copy_selected_history_path(tree)).pack(side="left", padx=8)
+       
+        search_var.trace_add("write", lambda *_: apply_filter())
+        
 
     def _populate_history(self, tree: ttk.Treeview) -> None:
         """
