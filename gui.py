@@ -579,6 +579,9 @@ class SpeakNotesApp:
         search_entry.pack(side="left", padx=8)
         search_entry.focus_set()
 
+        results_var = tk.StringVar(value="Results: 0/0")
+        tk.Label(search_frame, textvariable=results_var).pack(side="left", padx=12)
+
            # Top controls (Refresh + Play Selected)
         controls = tk.Frame(history_win)
         controls.pack(fill="x", padx=10, pady=(0, 10))
@@ -612,7 +615,16 @@ class SpeakNotesApp:
 
         # Populate initial data
         self._populate_history(tree)
+
+
+    # IMPORTANT: capture all row IDs AFTER population
         all_rows = list(tree.get_children())
+
+        def update_results_count() -> None:
+            visible = len(tree.get_children())
+            total = len(all_rows)
+            results_var.set(f"Results: {visible}/{total}")
+
         
         def apply_filter() -> None:
             query = search_var.get().strip().lower()
@@ -637,6 +649,8 @@ class SpeakNotesApp:
                 else:
                     tree.detach(item_id)
 
+            update_results_count()
+
         def refresh_table() -> None:
             nonlocal all_rows
             self._populate_history(tree)
@@ -649,7 +663,11 @@ class SpeakNotesApp:
         tk.Button(controls, text="Open Selected", command=lambda: self._open_selected_history(tree)).pack(side="left", padx=8)
         tk.Button(controls, text="Copy Path", command=lambda: self._copy_selected_history_path(tree)).pack(side="left", padx=8)
        
+        # Now that everything is initialized, connect the trace
         search_var.trace_add("write", lambda *_: apply_filter())
+
+        # Initial count display
+        update_results_count()
         
 
     def _populate_history(self, tree: ttk.Treeview) -> None:

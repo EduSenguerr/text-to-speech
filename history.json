@@ -243,5 +243,16 @@
     "source": "manual",
     "source_path": "",
     "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
+  },
+  {
+    "date": "2026-01-08T22:49:41",
+    "file": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/outputs/20260108-224937-im-being-so-lazy-lately-with-my-writing-.aiff",
+    "rate": 175,
+    "volume": 0.8,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "i'm being so lazy lately with my writing exercise, i need to"
   }
 ]
