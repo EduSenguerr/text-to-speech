@@ -179,28 +179,6 @@
     "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
   },
   {
-    "date": "2026-01-06T22:44:05",
-    "file": "outputs/20260106-224400-part-001-of-003-paragraph-one-this-will-be-exp.aiff",
-    "rate": 150,
-    "volume": 0.85,
-    "voice": "default",
-    "mode": "export",
-    "source": "txt",
-    "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/bulk_test.txt",
-    "text_preview": "Paragraph one. This will be exported as audio part 1."
-  },
-  {
-    "date": "2026-01-06T22:44:07",
-    "file": "outputs/20260106-224405-part-002-of-003-paragraph-two-this-will-be-exp.aiff",
-    "rate": 150,
-    "volume": 0.85,
-    "voice": "default",
-    "mode": "export",
-    "source": "txt",
-    "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/bulk_test.txt",
-    "text_preview": "Paragraph two. This will be exported as audio part 2."
-  },
-  {
     "date": "2026-01-06T22:44:10",
     "file": "outputs/20260106-224407-part-003-of-003-paragraph-three-this-will-be-e.aiff",
     "rate": 150,
@@ -210,39 +188,6 @@
     "source": "txt",
     "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/bulk_test.txt",
     "text_preview": "Paragraph three. This will be exported as audio part 3."
-  },
-  {
-    "date": "2026-01-06T23:03:44",
-    "file": "outputs/20260106-230337-testing-history-logging-feature-in-speak.aiff",
-    "rate": 150,
-    "volume": 0.85,
-    "voice": "default",
-    "mode": "export",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
-  },
-  {
-    "date": "2026-01-06T23:04:08",
-    "file": "outputs/20260106-230404-testing-history-logging-feature-in-speak.aiff",
-    "rate": 150,
-    "volume": 0.85,
-    "voice": "default",
-    "mode": "export",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
-  },
-  {
-    "date": "2026-01-06T23:04:41",
-    "file": "outputs/20260106-230437-testing-history-logging-feature-in-speak.aiff",
-    "rate": 150,
-    "volume": 0.85,
-    "voice": "default",
-    "mode": "both",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
   },
   {
     "date": "2026-01-08T22:49:41",

@@ -397,10 +397,13 @@ class SpeakNotesApp:
             try:
                 self.set_status_async("Exporting audio file...")
                 say_to_file(text=user_text, output_path=out_path, voice_name=voice_name, rate_wpm=rate_wpm)
-    
+
+                if not out_path.exists():
+                    raise RuntimeError(f"Export failed, file was not created: {out_path}")
+                
                 self.last_export_path = out_path
                 append_history(create_entry(out_path, settings, "export", user_text, self.text_source, self.text_source_path))
-    
+
                 self.set_status_async(f"Saved: {out_path}")
             except Exception as e:
                 self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
@@ -443,25 +446,14 @@ class SpeakNotesApp:
                     self.set_status_async(f"Exporting {i}/{total}...")
     
                     out_path = self.make_output_path_part(chunk, i, total)
-    
-                    say_to_file(
-                        text=chunk,
-                        output_path=out_path,
-                        voice_name=voice_name,
-                        rate_wpm=rate_wpm,
-                    )
-    
+                    say_to_file(text=chunk, output_path=out_path, voice_name=voice_name, rate_wpm=rate_wpm)
+                    
+                    if not out_path.exists():
+                        raise RuntimeError(f"Export failed, file was not created: {out_path}")
+                    
                     self.last_export_path = out_path
-                    append_history(
-                        create_entry(
-                            out_path,
-                            settings,
-                            "export",
-                            chunk,
-                            self.text_source,
-                            self.text_source_path,
-                        )
-                    )
+                    append_history(create_entry(out_path, settings, "export", chunk, self.text_source, self.text_source_path))
+
     
                 self.set_status_async(f"Bulk export finished: {total} files")
             except Exception as e:
@@ -548,10 +540,13 @@ class SpeakNotesApp:
                 self.set_status_async("Exporting audio file...")
                 out_path = self.make_output_path(user_text)
                 say_to_file(text=user_text, output_path=out_path, voice_name=voice_name, rate_wpm=rate_wpm)
-    
+                
+                if not out_path.exists():
+                    raise RuntimeError(f"Export failed, file was not created: {out_path}")
+                
                 self.last_export_path = out_path
                 append_history(create_entry(out_path, settings, "both", user_text, self.text_source, self.text_source_path))
-    
+
                 self.set_status_async(f"Preview + saved: {out_path}")
             except Exception as e:
                 self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
@@ -635,6 +630,7 @@ class SpeakNotesApp:
                     if not tree.exists(item_id):
                         continue
                     tree.reattach(item_id, "", "end")
+                    update_results_count()
                 return
         
             for item_id in all_rows:
@@ -665,6 +661,8 @@ class SpeakNotesApp:
        
         # Now that everything is initialized, connect the trace
         search_var.trace_add("write", lambda *_: apply_filter())
+
+        tree.bind("<Double-1>", lambda _event: self._open_selected_history(tree))
 
         # Initial count display
         update_results_count()
@@ -736,41 +734,55 @@ class SpeakNotesApp:
         candidate = (APP_CWD / p).resolve()
         return candidate
     
-    
-
     def _get_selected_history_audio_path(self, tree: ttk.Treeview) -> Path | None:
         selection = tree.selection()
         if not selection:
             messagebox.showinfo("No selection", "Please select a row first.")
             return None
     
-        values = tree.item(selection[0], "values")
-        if not values:
-            messagebox.showerror("Error", "Invalid selection data.")
-            return None
+        item_id = selection[0]
     
-        # columns: date, mode, source, source_file, file, ...
-        if len(values) < 5:
-            messagebox.showerror("Error", "Invalid selection data.")
-            return None
+        # Try reading from the "file" column by name
+        file_path = tree.set(item_id, "file")
     
-        file_path = values[4]
-        if not file_path:
-            messagebox.showerror("Error", "No file path found for this entry.")
-            return None
+        # Fallback: last value in the row (in case column mapping is off)
+        values = tree.item(item_id, "values")
+        fallback_path = values[4] if len(values) > 4 else ""
     
-        audio_path = Path(file_path)
+        raw = (file_path or "").strip()
+        raw_fb = (fallback_path or "").strip()
+    
+        audio_path = Path(raw) if raw else Path(raw_fb)
         if not audio_path.is_absolute():
             audio_path = (APP_ROOT / audio_path).resolve()
-
+    
+        debug_msg = (
+            f"tree.set('file'):\n{repr(file_path)}\n\n"
+            f"fallback values[4]:\n{repr(fallback_path)}\n\n"
+            f"resolved path:\n{audio_path}\n\n"
+            f"exists?: {audio_path.exists()}"
+        )
+        messagebox.showinfo("History debug", debug_msg)
         if not audio_path.exists():
-            messagebox.showerror("File not found", f"Audio file not found:\n{audio_path}")
-            return None
+            remove = messagebox.askyesno(
+                "File not found",
+                "This history entry points to a file that no longer exists.\n\n"
+                "Do you want to remove this entry from history?"
+            )
+            if remove:
+                removed = self._remove_history_entry_by_file(file_path)
+                if removed > 0:
+                    self.set_status("Removed broken history entry.")
+                else:
+                    messagebox.showwarning(
+                        "Not removed",
+                        "No matching entry was removed from history.json.\n"
+                        "This usually means the saved path format doesn't match this row."
+                    )
+            
 
-
-    
         return audio_path
-    
+
     def _reveal_selected_history(self, tree: ttk.Treeview) -> None:
         """
         Reveals the selected history audio file in the system file browser.
@@ -819,7 +831,45 @@ class SpeakNotesApp:
         self.root.clipboard_append(str(audio_path))
         self.set_status(f"Copied path: {audio_path.name}")
     
+    def _remove_history_entry_by_file(self, file_path: str) -> int:
+        """
+        Removes history entries matching a given file path (relative or absolute).
+        Returns the number of removed entries.
+        """
+        import json
     
+        history_path = APP_ROOT / "history.json"
+        if not history_path.exists():
+            return 0
+    
+        data = json.loads(history_path.read_text(encoding="utf-8"))
+    
+        target_raw = str(file_path).strip()
+    
+        p = Path(target_raw)
+        target_abs = str((APP_ROOT / p).resolve()) if not p.is_absolute() else str(p.resolve())
+    
+        def to_abs(path_str: str) -> str:
+            q = Path(path_str.strip())
+            return str((APP_ROOT / q).resolve()) if not q.is_absolute() else str(q.resolve())
+    
+        before = len(data)
+        cleaned = []
+        for entry in data:
+            raw = str(entry.get("file", "")).strip()
+            if not raw:
+                cleaned.append(entry)
+                continue
+    
+            raw_abs = to_abs(raw)
+    
+            should_remove = (raw == target_raw) or (raw == target_abs) or (raw_abs == target_abs)
+            if not should_remove:
+                cleaned.append(entry)
+    
+        history_path.write_text(json.dumps(cleaned, indent=2), encoding="utf-8")
+        return before - len(cleaned)
+
 
     def open_outputs_folder(self) -> None:
         """
