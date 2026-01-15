@@ -658,7 +658,8 @@ class SpeakNotesApp:
         tk.Button(controls, text="Reveal Selected", command=lambda: self._reveal_selected_history(tree)).pack(side="left", padx=8)
         tk.Button(controls, text="Open Selected", command=lambda: self._open_selected_history(tree)).pack(side="left", padx=8)
         tk.Button(controls, text="Copy Path", command=lambda: self._copy_selected_history_path(tree)).pack(side="left", padx=8)
-       
+        tk.Button(controls, text="Delete Selected", command=lambda: self._delete_selected_history_entry(tree, refresh_table)).pack(side="left", padx=6)
+
         # Now that everything is initialized, connect the trace
         search_var.trace_add("write", lambda *_: apply_filter())
 
@@ -869,7 +870,60 @@ class SpeakNotesApp:
     
         history_path.write_text(json.dumps(cleaned, indent=2), encoding="utf-8")
         return before - len(cleaned)
-
+    
+    def _delete_selected_history_entry(self, tree: ttk.Treeview, refresh_fn) -> None:
+        """
+        Removes the selected history entry. Optionally deletes the audio file from disk.
+        """
+        selection = tree.selection()
+        if not selection:
+            messagebox.showinfo("No selection", "Please select a row first.")
+            return
+    
+        item_id = selection[0]
+        file_path = str(tree.set(item_id, "file")).strip()
+        if not file_path:
+            messagebox.showerror("Error", "No file path found for this entry.")
+            return
+    
+        # Resolve to absolute path for disk operations
+        audio_path = Path(file_path)
+        if not audio_path.is_absolute():
+            audio_path = (APP_ROOT / audio_path).resolve()
+    
+        # Ask what to do
+        if audio_path.exists():
+            delete_file = messagebox.askyesno(
+                "Delete selected",
+                "Do you want to delete the audio file from disk too?\n\n"
+                "Yes = delete file + remove from history\n"
+                "No = remove from history only"
+            )
+        else:
+            delete_file = False
+            messagebox.showinfo(
+                "Missing file",
+                "The audio file is already missing.\n"
+                "This entry will be removed from history."
+            )
+    
+        # If requested, delete the file from disk
+        if delete_file and audio_path.exists():
+            try:
+                audio_path.unlink()
+            except Exception as e:
+                messagebox.showerror("Error", f"Could not delete the file:\n{e}")
+                return
+    
+        # Always remove from history
+        removed = self._remove_history_entry_by_file(file_path)
+        if removed == 0 and audio_path.exists():
+            # Try again using absolute path as fallback
+            removed = self._remove_history_entry_by_file(str(audio_path))
+    
+        refresh_fn()
+        self.set_status("Deleted history entry." if removed else "No matching history entry removed.")
+    
 
     def open_outputs_folder(self) -> None:
         """
