@@ -1,14 +1,5 @@
 [
   {
-    "date": "2025-12-29T21:58:09",
-    "file": "outputs/20251229-215807-hello-there-i-hope-you-are-doing-well-do.aiff",
-    "rate": 175,
-    "volume": 1.0,
-    "voice": "default",
-    "mode": "export",
-    "text_preview": "Hello there! i hope you are doing well, don't forget you are"
-  },
-  {
     "date": "2025-12-29T22:20:05",
     "file": "outputs/20251229-222003-testing-history-logging-feature-in-speak.aiff",
     "rate": 175,
@@ -102,41 +93,8 @@
     "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
   },
   {
-    "date": "2026-01-04T22:51:09",
-    "file": "outputs/20260104-225106-hi-there-im-michael-scott-regional-manag.aiff",
-    "rate": 190,
-    "volume": 0.6,
-    "voice": "default",
-    "mode": "both",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
-  },
-  {
     "date": "2026-01-06T21:55:01",
     "file": "outputs/20260106-215457-hi-there-im-michael-scott-regional-manag.aiff",
-    "rate": 150,
-    "volume": 0.85,
-    "voice": "default",
-    "mode": "both",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
-  },
-  {
-    "date": "2026-01-06T21:56:03",
-    "file": "outputs/20260106-215559-hi-there-im-michael-scott-regional-manag.aiff",
-    "rate": 150,
-    "volume": 0.85,
-    "voice": "default",
-    "mode": "both",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "Hi there! i'm Michael Scott. Regional manager from Dunder Mi"
-  },
-  {
-    "date": "2026-01-06T22:04:59",
-    "file": "outputs/20260106-220455-hi-there-im-michael-scott-regional-manag.aiff",
     "rate": 150,
     "volume": 0.85,
     "voice": "default",
@@ -190,14 +148,14 @@
     "text_preview": "Paragraph three. This will be exported as audio part 3."
   },
   {
-    "date": "2026-01-08T22:49:41",
-    "file": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/outputs/20260108-224937-im-being-so-lazy-lately-with-my-writing-.aiff",
+    "date": "2026-01-19T22:35:17",
+    "file": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/outputs/20260119-223512-paragraph-one-this-will-be-exported-as-a.aiff",
     "rate": 175,
     "volume": 0.8,
     "voice": "default",
     "mode": "export",
     "source": "manual",
     "source_path": "",
-    "text_preview": "i'm being so lazy lately with my writing exercise, i need to"
+    "text_preview": "Paragraph one. This will be exported as audio part 1.  Parag"
   }
 ]

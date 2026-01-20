@@ -141,25 +141,12 @@ class SpeakNotesApp:
         tk.Button(btn_frame, text="Load .txt", command=self.load_txt).pack(side="left")
         tk.Button(btn_frame, text="History", command=self.open_history_window).pack(side="left", padx=8)
         tk.Button(btn_frame, text="Open Outputs", command=self.open_outputs_folder).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="Reveal Last", command=self.reveal_last_export).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="Open Last", command=self.open_last_export).pack(side="left", padx=8)
-
+       
+        tk.Button(btn_frame, text="Bulk Export", command=self.bulk_export).pack(side="left", padx=8)
+        
         self.run_btn = tk.Button(btn_frame, text="Run", command=self.run_mode)
         self.run_btn.pack(side="right", padx=6)
         
-        self.both_btn = tk.Button(btn_frame, text="Both", command=self.both)
-        self.both_btn.pack(side="right", padx=6)
-        
-        self.export_btn = tk.Button(btn_frame, text="Export", command=self.export)
-        self.export_btn.pack(side="right", padx=6)
-        
-        self.preview_btn = tk.Button(btn_frame, text="Preview", command=self.preview)
-        self.preview_btn.pack(side="right", padx=6)
-
-        tk.Button(btn_frame, text="Play Latest", command=self.play_latest).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="Bulk Export", command=self.bulk_export).pack(side="left", padx=8)
-
-
 
         # Status line
         status_frame = tk.Frame(self.root)
@@ -270,7 +257,7 @@ class SpeakNotesApp:
         Enables or disables main action buttons to prevent concurrent runs.
         """
         state = "normal" if enabled else "disabled"
-        for btn in (self.preview_btn, self.export_btn, self.both_btn, self.run_btn):
+        for btn in (self.run_btn,):
             btn.config(state=state)
 
 
@@ -292,6 +279,8 @@ class SpeakNotesApp:
                 self.set_status("Error.")
             finally:
                 self._set_controls_enabled(True)
+        
+        self.root.after(0, run_job)
 
     
     def filter_history(self, tree: ttk.Treeview) -> None:
@@ -757,30 +746,6 @@ class SpeakNotesApp:
         if not audio_path.is_absolute():
             audio_path = (APP_ROOT / audio_path).resolve()
     
-        debug_msg = (
-            f"tree.set('file'):\n{repr(file_path)}\n\n"
-            f"fallback values[4]:\n{repr(fallback_path)}\n\n"
-            f"resolved path:\n{audio_path}\n\n"
-            f"exists?: {audio_path.exists()}"
-        )
-        messagebox.showinfo("History debug", debug_msg)
-        if not audio_path.exists():
-            remove = messagebox.askyesno(
-                "File not found",
-                "This history entry points to a file that no longer exists.\n\n"
-                "Do you want to remove this entry from history?"
-            )
-            if remove:
-                removed = self._remove_history_entry_by_file(file_path)
-                if removed > 0:
-                    self.set_status("Removed broken history entry.")
-                else:
-                    messagebox.showwarning(
-                        "Not removed",
-                        "No matching entry was removed from history.json.\n"
-                        "This usually means the saved path format doesn't match this row."
-                    )
-            
 
         return audio_path
 
@@ -929,7 +894,7 @@ class SpeakNotesApp:
         """
         Opens the outputs folder in the system file browser.
         """
-        out_dir = Path("outputs")
+        out_dir = APP_ROOT / "outputs"
         out_dir.mkdir(exist_ok=True)
 
         if sys.platform == "darwin":
@@ -940,23 +905,22 @@ class SpeakNotesApp:
             subprocess.run(["xdg-open", str(out_dir)])
 
     def run_mode(self) -> None:
-        """
-        Runs the selected mode (preview/export/both) using the current text and settings.
-        """
         mode = self.mode_var.get().strip().lower()
+        self.set_status(f"Run pressed. Mode={mode}")
+    
         if mode == "preview":
             self.preview()
         elif mode == "both":
             self.both()
         else:
             self.export()
-
+    
 
     def play_latest(self) -> None:
         """
         Plays the most recently modified audio file in outputs/ (macOS uses afplay).
         """
-        out_dir = Path("outputs")
+        out_dir = APP_ROOT / "outputs"
         if not out_dir.exists():
             messagebox.showinfo("No outputs", "No outputs folder found yet.")
             return
