@@ -643,16 +643,36 @@ class SpeakNotesApp:
             apply_filter()
 
         tk.Button(controls, text="Refresh", command=refresh_table).pack(side="left", padx=6)
-        tk.Button(controls, text="Play Selected", command=lambda: self._play_selected_history(tree)).pack(side="left", padx=8)
-        tk.Button(controls, text="Reveal Selected", command=lambda: self._reveal_selected_history(tree)).pack(side="left", padx=8)
-        tk.Button(controls, text="Open Selected", command=lambda: self._open_selected_history(tree)).pack(side="left", padx=8)
         tk.Button(controls, text="Copy Path", command=lambda: self._copy_selected_history_path(tree)).pack(side="left", padx=8)
-        tk.Button(controls, text="Delete Selected", command=lambda: self._delete_selected_history_entry(tree, refresh_table)).pack(side="left", padx=6)
 
+        menu = tk.Menu(history_win, tearoff=0)
+        menu.add_command(label="Open", command=lambda: self._open_selected_history(tree))
+        menu.add_command(label="Reveal in Finder", command=lambda: self._reveal_selected_history(tree))
+        menu.add_command(label="Play (macOS)", command=lambda: self._play_selected_history(tree))
+        menu.add_separator()
+        menu.add_command(label="Copy Path", command=lambda: self._copy_selected_history_path(tree))
+        menu.add_separator()
+        menu.add_command(label="Delete Entry", command=lambda: self._delete_selected_history_entry(tree, refresh_table))
+
+        def show_context_menu(event) -> None:
+            row_id = tree.identify_row(event.y)
+            if row_id:
+                tree.selection_set(row_id)
+                menu.tk_popup(event.x_root, event.y_root)
+
+        # macOS: right click can be Button-2 or Button-3 depending on device/settings.
+        tree.bind("<Button-2>", show_context_menu)
+        tree.bind("<Button-3>", show_context_menu)
+        
+        # macOS: Ctrl + click is also commonly used as secondary click.
+        tree.bind("<Control-Button-1>", show_context_menu)
+        
         # Now that everything is initialized, connect the trace
         search_var.trace_add("write", lambda *_: apply_filter())
 
         tree.bind("<Double-1>", lambda _event: self._open_selected_history(tree))
+        tree.bind("<Return>", lambda _event: self._open_selected_history(tree))
+
 
         # Initial count display
         update_results_count()
@@ -745,8 +765,24 @@ class SpeakNotesApp:
         audio_path = Path(raw) if raw else Path(raw_fb)
         if not audio_path.is_absolute():
             audio_path = (APP_ROOT / audio_path).resolve()
-    
 
+        if not audio_path.exists():
+            remove = messagebox.askyesno(
+                "File not found",
+                "This history entry points to a file that no longer exists.\n\n"
+                "Do you want to remove this entry from history?"
+            )
+            if remove:
+                removed = self._remove_history_entry_by_file(file_path)
+                if removed > 0:
+                    self.set_status("Removed broken history entry.")
+                else:
+                    messagebox.showwarning(
+                        "Not removed",
+                        "No matching entry was removed from history.json."
+                    )
+            return None
+        
         return audio_path
 
     def _reveal_selected_history(self, tree: ttk.Treeview) -> None:
