@@ -78,16 +78,16 @@ class SpeakNotesApp:
         top_frame = tk.Frame(self.root)
         top_frame.pack(fill="x", padx=12, pady=10)
 
-        tk.Label(top_frame, text="Preset:").pack(side="left")
+        tk.Label(top_frame, text="Preset").pack(side="left")
         preset_menu = tk.OptionMenu(top_frame, self.preset_var, *PRESETS.keys())
         preset_menu.pack(side="left", padx=8)
 
-        tk.Label(top_frame, text="Voice:").pack(side="left", padx=(16, 0))
+        tk.Label(top_frame, text="Voice").pack(side="left", padx=(16, 0))
 
         voice_options = ["Default (system)"] + [name for _, name in self.voice_items]
         voice_menu = tk.OptionMenu(top_frame, self.voice_var, *voice_options)
         voice_menu.pack(side="left", padx=8)
-        tk.Label(top_frame, text="Mode:").pack(side="left", padx=(16, 0))
+        tk.Label(top_frame, text="Mode").pack(side="left", padx=(16, 0))
         mode_menu = tk.OptionMenu(top_frame, self.mode_var, "preview", "export", "both")
         mode_menu.pack(side="left", padx=8)
 
@@ -136,7 +136,7 @@ class SpeakNotesApp:
 
         # Buttons row
         btn_frame = tk.Frame(self.root)
-        btn_frame.pack(fill="x", padx=12, pady=10)
+        btn_frame.pack(fill="x", padx=12, pady=(18, 10))
 
         tk.Button(btn_frame, text="Load .txt", command=self.load_txt).pack(side="left")
         tk.Button(btn_frame, text="History", command=self.open_history_window).pack(side="left", padx=8)
@@ -144,15 +144,28 @@ class SpeakNotesApp:
        
         tk.Button(btn_frame, text="Bulk Export", command=self.bulk_export).pack(side="left", padx=8)
         
-        self.run_btn = tk.Button(btn_frame, text="Run", command=self.run_mode)
-        self.run_btn.pack(side="right", padx=6)
-        
+        self.run_btn = tk.Button(
+            btn_frame,
+            text="Run",
+            command=self.run_mode,
+            width=10,
+            font=("TkDefaultFont", 10, "bold")
+        )
+        self.run_btn.pack(side="right", padx=6, pady=2)
 
         # Status line
         status_frame = tk.Frame(self.root)
         status_frame.pack(fill="x", padx=12, pady=(0, 12))
 
-        tk.Label(status_frame, textvariable=self.status_var, anchor="w").pack(fill="x")
+        tk.Label(
+            status_frame,
+            textvariable=self.status_var,
+            anchor="w",
+            relief="sunken",
+            padx=6,
+            pady=4
+        ).pack(fill="x")
+
 
     def set_status(self, message: str) -> None:
         """
@@ -452,48 +465,6 @@ class SpeakNotesApp:
                 self.root.after(0, lambda: self._set_controls_enabled(True))
     
         threading.Thread(target=worker, daemon=True).start()
-
-
-    def reveal_last_export(self) -> None:
-        """
-        Reveals the most recently exported audio file in the system file browser.
-        """
-        if not self.last_export_path or not self.last_export_path.exists():
-            messagebox.showinfo("No export yet", "No exported file found yet.")
-            return
-    
-        import subprocess
-        import sys
-    
-        path_str = str(self.last_export_path)
-    
-        if sys.platform == "darwin":
-            subprocess.run(["open", "-R", path_str])
-        elif sys.platform.startswith("win"):
-            subprocess.run(["explorer", "/select,", path_str])
-        else:
-            subprocess.run(["xdg-open", str(self.last_export_path.parent)])
-
-
-    def open_last_export(self) -> None:
-        """
-        Opens the most recently exported audio file with the default system app.
-        """
-        if not self.last_export_path or not self.last_export_path.exists():
-            messagebox.showinfo("No export yet", "No exported file found yet.")
-            return
-    
-        import subprocess
-        import sys
-    
-        path_str = str(self.last_export_path)
-    
-        if sys.platform == "darwin":
-            subprocess.run(["open", path_str])
-        elif sys.platform.startswith("win"):
-            subprocess.run(["start", "", path_str], shell=True)
-        else:
-            subprocess.run(["xdg-open", path_str])
 
     def both(self) -> None:
         user_text = self.get_user_text()
@@ -951,29 +922,6 @@ class SpeakNotesApp:
         else:
             self.export()
     
-
-    def play_latest(self) -> None:
-        """
-        Plays the most recently modified audio file in outputs/ (macOS uses afplay).
-        """
-        out_dir = APP_ROOT / "outputs"
-        if not out_dir.exists():
-            messagebox.showinfo("No outputs", "No outputs folder found yet.")
-            return
-
-        audio_files = sorted(out_dir.glob("*.aiff"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not audio_files:
-            messagebox.showinfo("No audio files", "No exported audio files found in outputs/.")
-            return
-
-        latest = audio_files[0]
-        self.status_var.set(f"Playing: {latest.name}")
-        self.root.update_idletasks()
-
-        if sys.platform == "darwin":
-            subprocess.run(["afplay", str(latest)])
-        else:
-            messagebox.showinfo("Unsupported", "Auto-play is currently implemented only for macOS.")
 
     def save_current_config(self) -> None:
         """
