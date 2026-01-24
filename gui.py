@@ -18,6 +18,8 @@ from speaknotes.macos_say import say_to_file, say_now
 
 APP_ROOT = Path(__file__).resolve().parent
 APP_CWD = Path.cwd()
+APP_VERSION = "v1.0"
+
 
 
 class SpeakNotesApp:
@@ -156,15 +158,25 @@ class SpeakNotesApp:
         # Status line
         status_frame = tk.Frame(self.root)
         status_frame.pack(fill="x", padx=12, pady=(0, 12))
-
-        tk.Label(
+        
+        status_label = tk.Label(
             status_frame,
             textvariable=self.status_var,
             anchor="w",
             relief="sunken",
             padx=6,
             pady=4
-        ).pack(fill="x")
+        )
+        status_label.pack(side="left", fill="x", expand=True)
+        
+        version_label = tk.Label(
+            status_frame,
+            text=APP_VERSION,
+            anchor="e",
+            fg="gray"
+        )
+        version_label.pack(side="right", padx=4)
+        
 
 
     def set_status(self, message: str) -> None:
