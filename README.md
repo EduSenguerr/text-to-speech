@@ -139,12 +139,13 @@ Ensures:
 
 Why use APP_ROOT?
 
-Avoids path inconsistencies when launching from different directories.
+- Avoids path inconsistencies when launching from different directories.
 
 Why Mode + Run instead of multiple buttons?
 
-Cleaner UX.
-Single primary action reduces confusion and improves clarity.
+- Cleaner UX.
+
+- Single primary action reduces confusion and improves clarity.
 
 ### 🛠 Challenges Solved
 
