@@ -1,11 +1,11 @@
-### 📄 SpeakNotes
+## 📄 SpeakNotes
 
 A lightweight desktop Text-to-Speech utility built with Python + Tkinter, designed for focused reading, note listening, and structured audio exports.
 
 SpeakNotes allows users to preview text as speech, export audio files, manage voice presets, and maintain a searchable history of generated audio.
 
 
-### ✨ Features
+## ✨ Features
 🎙 Core Functionality
 
 Preview text as speech
@@ -20,7 +20,7 @@ Voice selection (system voices)
 
 Adjustable speech rate and volume
 
-## ⚙️ Smart Controls
+### ⚙️ Smart Controls
 
 Presets (Study, Default, etc.)
 
@@ -32,7 +32,7 @@ Draft autosave (draft.txt)
 
 Mode persistence between sessions
 
-## 🗂 History System
+### 🗂 History System
 
 Logs every export
 
@@ -54,7 +54,7 @@ Delete entry (with optional file deletion)
 
 Handles missing/broken files gracefully
 
-## 🧠 UX & Architecture
+### 🧠 UX & Architecture
 
 Thread-safe speech execution
 
@@ -67,7 +67,7 @@ Centralized path handling via APP_ROOT
 Version label in status bar
 
 
-### 🖥 Platform
+## 🖥 Platform
 
 Currently optimized for macOS
 
@@ -78,7 +78,7 @@ Currently optimized for macOS
 Non-macOS fallback uses pyttsx3.
 
 
-## 🚀 Installation
+### 🚀 Installation
 1️⃣ Clone the repository
 ```bash
 git clone git@github.com:YOUR_USERNAME/text-to-speech.git
@@ -120,7 +120,7 @@ text-to-speech/
 │   └── macos_say.py
 ```
 
-## 🧩 Design Decisions
+### 🧩 Design Decisions
 Why Tkinter?
 
 - Built-in, lightweight, zero external GUI dependencies
@@ -146,7 +146,7 @@ Why Mode + Run instead of multiple buttons?
 Cleaner UX.
 Single primary action reduces confusion and improves clarity.
 
-## 🛠 Challenges Solved
+### 🛠 Challenges Solved
 
 Thread-safe UI updates during speech processing
 
@@ -160,7 +160,7 @@ Preventing UI freeze during long exports
 
 Designing a clean, non-cluttered interface
 
-## 📌 Future Improvements
+### 📌 Future Improvements
 
 Sortable history columns
 
@@ -173,7 +173,7 @@ Export format selection (mp3/wav)
 Installer packaging
 
 
-## 📷 Screenshots
+### 📷 Screenshots
 
 ### Main Window
 ![Main Window](assets/main-window.png)
