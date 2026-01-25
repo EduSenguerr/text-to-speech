@@ -80,23 +80,28 @@ Non-macOS fallback uses pyttsx3.
 
 ## 🚀 Installation
 1️⃣ Clone the repository
+```bash
 git clone git@github.com:YOUR_USERNAME/text-to-speech.git
 cd text-to-speech
+```
 
 2️⃣ Create virtual environment
+```bash
 python3 -m venv venv
 source venv/bin/activate
-
+```
 3️⃣ Install dependencies
 
 If using macOS system voices only, no additional dependencies required.
 
 For cross-platform fallback:
+```bash 
 pip install pyttsx3
-
+```
 ▶️ Run the App
+```bash
 python3 gui.py
-
+```
 📂 Project Structure
 text-to-speech/
 │
