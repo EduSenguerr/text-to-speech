@@ -1,11 +1,11 @@
-## 📄 SpeakNotes
+### 📄 SpeakNotes
 
 A lightweight desktop Text-to-Speech utility built with Python + Tkinter, designed for focused reading, note listening, and structured audio exports.
 
 SpeakNotes allows users to preview text as speech, export audio files, manage voice presets, and maintain a searchable history of generated audio.
 
 
-## ✨ Features
+### ✨ Features
 🎙 Core Functionality
 
 Preview text as speech
@@ -20,7 +20,7 @@ Voice selection (system voices)
 
 Adjustable speech rate and volume
 
-⚙️ Smart Controls
+## ⚙️ Smart Controls
 
 Presets (Study, Default, etc.)
 
@@ -32,7 +32,7 @@ Draft autosave (draft.txt)
 
 Mode persistence between sessions
 
-🗂 History System
+## 🗂 History System
 
 Logs every export
 
@@ -54,7 +54,7 @@ Delete entry (with optional file deletion)
 
 Handles missing/broken files gracefully
 
-🧠 UX & Architecture
+## 🧠 UX & Architecture
 
 Thread-safe speech execution
 
@@ -67,7 +67,7 @@ Centralized path handling via APP_ROOT
 Version label in status bar
 
 
-## 🖥 Platform
+### 🖥 Platform
 
 Currently optimized for macOS
 
@@ -103,6 +103,7 @@ pip install pyttsx3
 python3 gui.py
 ```
 📂 Project Structure
+```
 text-to-speech/
 │
 ├── gui.py
@@ -117,7 +118,7 @@ text-to-speech/
 │   ├── config_utils.py
 │   ├── text_utils.py
 │   └── macos_say.py
-
+```
 
 ## 🧩 Design Decisions
 Why Tkinter?
@@ -145,7 +146,7 @@ Why Mode + Run instead of multiple buttons?
 Cleaner UX.
 Single primary action reduces confusion and improves clarity.
 
-🛠 Challenges Solved
+## 🛠 Challenges Solved
 
 Thread-safe UI updates during speech processing
 
