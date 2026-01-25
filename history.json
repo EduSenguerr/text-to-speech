@@ -1,49 +1,5 @@
 [
   {
-    "date": "2025-12-30T18:04:27",
-    "file": "outputs/20251230-180420-wikipedia-is-the-best-thing-ever-anyone-.aiff",
-    "rate": 120,
-    "volume": 0.4,
-    "voice": "default",
-    "mode": "export",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "\"Wikipedia is the best thing ever. Anyone in the world can w"
-  },
-  {
-    "date": "2025-12-30T18:05:50",
-    "file": "outputs/20251230-180547-testing-history-logging-feature-in-speak.aiff",
-    "rate": 190,
-    "volume": 0.6,
-    "voice": "default",
-    "mode": "export",
-    "source": "txt",
-    "source_path": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/samples/test.txt",
-    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
-  },
-  {
-    "date": "2025-12-30T18:06:40",
-    "file": "outputs/20251230-180637-testing-history-logging-feature-in-speak.aiff",
-    "rate": 190,
-    "volume": 0.6,
-    "voice": "default",
-    "mode": "export",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "Testing history logging feature in SpeakNotes portfolio proj"
-  },
-  {
-    "date": "2025-12-30T18:24:58",
-    "file": "outputs/20251230-182454-i-dont-want-somebody-sucking-up-to-me-be.aiff",
-    "rate": 190,
-    "volume": 0.6,
-    "voice": "default",
-    "mode": "export",
-    "source": "manual",
-    "source_path": "",
-    "text_preview": "\"I don't want somebody sucking up to me because they think I"
-  },
-  {
     "date": "2025-12-30T18:26:13",
     "file": "outputs/20251230-182610-i-dont-want-somebody-sucking-up-to-me-be.aiff",
     "rate": 190,
@@ -101,6 +57,17 @@
   {
     "date": "2026-01-19T22:35:17",
     "file": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/outputs/20260119-223512-paragraph-one-this-will-be-exported-as-a.aiff",
+    "rate": 175,
+    "volume": 0.8,
+    "voice": "default",
+    "mode": "export",
+    "source": "manual",
+    "source_path": "",
+    "text_preview": "Paragraph one. This will be exported as audio part 1.  Parag"
+  },
+  {
+    "date": "2026-01-23T23:18:06",
+    "file": "/Users/edumacintosh/proyectos/PythonProjects/text-to-speech/outputs/20260123-231758-paragraph-one-this-will-be-exported-as-a.aiff",
     "rate": 175,
     "volume": 0.8,
     "voice": "default",
